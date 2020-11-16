@@ -15,3 +15,27 @@ library(here)
 hares<-read.csv(here("data","bonanza_hares.csv"))  # read data
 ```
 
+
+### c) Exploratory findings
+
+#### i) Annual juvenile hare trap counts. 
+
+Count the total number of juvenile (age == "j") hare trappings ​during each year​ of the study (include all grid sites), and create a ​finalized data visualization​ of the counts by year. Include a figure caption below the figure in your report.
+
+```{r}
+juveniles_per_year <- hares %>%    # copy data
+  filter(age == "j") %>%       # select juvenile hares
+  mutate(Year = year(mdy(date))) %>%     # create new column with year
+  count(Year)
+  
+ggplot( data= juveniles_per_year, aes(x =Year, y =n)) +   # select data and variables
+  geom_bar(stat="identity", fill="snow4") +    # do a bar plot
+  scale_x_continuous(breaks=2*(994:1006)) +   # adjust ticks
+  labs(title="Total number of juvenile snowshoe hares \n recorded over the years.",
+       y= "Number of hares") +
+  theme_light()  # update theme
+
+median(juveniles_per_year$n)
+mean(juveniles_per_year$n)
+```
+
