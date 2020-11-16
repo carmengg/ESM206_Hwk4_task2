@@ -1,0 +1,17 @@
+---
+title: "Homework 4 - Task 2"
+author: "Carmen Galaz-García"
+date: "11/15/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)  # include packages 
+library(lubridate)
+library(janitor)
+library(here)
+
+hares<-read.csv(here("data","bonanza_hares.csv"))  # read data
+```
+
