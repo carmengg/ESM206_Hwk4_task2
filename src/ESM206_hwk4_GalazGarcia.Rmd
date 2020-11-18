@@ -8,9 +8,13 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)  # include packages 
-library(lubridate)
-library(janitor)
-library(here)
+library(lubridate)  #  handle dates
+library(janitor)    # clean names (not used)
+library(here)       # local paths to files
+library(ggbeeswarm) # make beeswarm graphs
+library(kableExtra)  # create nice tables
+library(effsize)    # includes cohen's d
+
 
 hares<-read.csv(here("data","bonanza_hares.csv"))  # read data
 ```
@@ -23,19 +27,181 @@ hares<-read.csv(here("data","bonanza_hares.csv"))  # read data
 Count the total number of juvenile (age == "j") hare trappings ​during each year​ of the study (include all grid sites), and create a ​finalized data visualization​ of the counts by year. Include a figure caption below the figure in your report.
 
 ```{r}
-juveniles_per_year <- hares %>%    # copy data
+# --- Count juveniles per year
+per_year_juveniles <- hares %>%    # copy data
   filter(age == "j") %>%       # select juvenile hares
   mutate(Year = year(mdy(date))) %>%     # create new column with year
   count(Year)
-  
-ggplot( data= juveniles_per_year, aes(x =Year, y =n)) +   # select data and variables
+
+# --- Create graph
+ggplot( data= per_year_juveniles, aes(x =Year, y =n)) +   # select data and variables
   geom_bar(stat="identity", fill="snow4") +    # do a bar plot
   scale_x_continuous(breaks=2*(994:1006)) +   # adjust ticks
   labs(title="Total number of juvenile snowshoe hares \n recorded over the years.",
        y= "Number of hares") +
   theme_light()  # update theme
 
-median(juveniles_per_year$n)
-mean(juveniles_per_year$n)
+# --- Summary statistics
+median(per_year_juveniles$n)
+mean(per_year_juveniles$n)
+```
+
+
+### ii)
+Create a finalized data visualization (or visualizations) in which you compare **juvenile hare weights by sex and site (grid)** (ignore other variables). You should include groups where these variables are not recorded (`NA`). Include finalized figure captions below your visualization(s).
+
+```{r}
+# --- Exploring data
+sex_site_juveniles <- hares %>%    # copy data
+  filter(age == "j") %>%       # select juvenile hares
+  count(sex, grid)
+sex_site_juveniles
+
+# --- Selecting data for juvenile hares
+juveniles <- hares %>% filter(age=="j")
+
+# --- Create graph of juvenile hares divided by sex and grid
+ggplot(data=juveniles, aes(x=sex, y=weight))+
+  geom_boxplot(aes(fill=sex), show.legend = FALSE)+  # remove legend
+  #geom_boxplot(fill=0.1)+  # makes boxes transparent
+  facet_wrap(~grid) +
+  theme_light()  # update theme
+
+
+#bonbs_NA <- juveniles %>%    # checking there's actually no data here
+  # filter(grid=="bonbs" & sex=="NA")
+```
+
+```{r}
+summary_juveniles <- juveniles %>% 
+  group_by(sex, grid) %>% 
+  summarize(mean_weight = mean(weight, na.rm=TRUE),
+            sd_weight = sd(weight, na.rm=TRUE),
+            sample_size = n())
+
+ggplot() +
+  geom_beeswarm(data = juveniles,   # use data from juveniles
+                aes(x = sex,        
+                    y = weight,
+                    color = sex     # color points by sex
+                    ),
+                size = 2,    # point size
+                alpha = 0.6, # transparency
+                pch = 16,    # ?
+                cex=2.5      # scatters points
+                ) +
+  facet_wrap(~grid) +        # make one graph per grid element
+  theme(legend.position = "none") +    # removes legend
+  scale_x_discrete(labels = c("female", "male", "NA")) +   # update x-axis labels
+  geom_point(data = summary_juveniles, 
+             aes(x = sex, y = mean_weight),   # 
+             color = "firebrick",
+             #show.legend = FALSE,
+             size = 2.5) +
+  geom_errorbar(data = summary_juveniles, 
+                aes(x = sex, 
+                    ymin = mean_weight - sd_weight,
+                    ymax = mean_weight + sd_weight),
+                color = "firebrick",
+                #show.legend = FALSE,
+                width = 0.1)
+                #+ theme_light()  # update theme
+
+```
+
+### iii) Juvenile weight comparison (male & female snowshoe hares).
+Further compare mean weights for **juvenile male and female snowshoe hares** included in this study. In this section, you should include:
+● A finalized table containing the mean, standard deviation, and sample size for male and female juvenile snowshoe hares, with a table caption (remember, this is placed *above* the table in your report)
+● A 2 - 3 sentence comprehensive statement of the means comparison, including at least:
+○ The actual difference in means
+○ Effect size (Cohen's *d*)
+○ Outcome of a two-sample t-test
+
+```{r}
+# --- checking how many hares don't have weight registered
+#View(filter(juveniles,is.na(weight)))    # seven juvenile hares with weight==NA
+
+# --- separate data of female and male juvenile hares iwth recorded weight
+female_male <-  juveniles %>%   # copy data
+  filter(!is.na(weight)) %>%           # select those with recorded weight
+  filter(!is.na(sex))                  # select those with recorded sex
+
+# --- create summary data for weight of female and male hares
+female_male_summary <- female_male %>%   # copy data
+  group_by(sex) %>% 
+  summarize(mean_weight = mean(weight, na.rm=TRUE),
+            sd_weight = sd(weight, na.rm=TRUE),
+            sample_size = n())
+
+# --- Update tags for table
+female_male_summary[1,1] <- "female"  
+female_male_summary[2,1] <- "male"  
+
+# --- create table
+female_male_summary %>% kable( col.names = c("Sex", 
+                                       "Mean weight (g)", 
+                                       "Standard deviation (g)",
+                                       "Sample size (n)" ) 
+                         ) %>% 
+   kable_styling(full_width = FALSE)
+```
+
+
+```{r, include=FALSE}
+# --- Exploring data to ensure 2-sample t-test is adequate
+
+# Histograms: female hares normal, male hares too though slightly bimodal
+ggplot(data = female_male, aes(x = weight)) +
+  geom_histogram(bins = 25) +
+  facet_wrap(~sex)
+
+# QQ Plots: both graphs close to a line
+ggplot(data= female_male, aes(sample = weight)) +
+  geom_qq() +
+  facet_wrap(~sex)
+
+```
+
+
+
+```{r}
+# --- Two-sample t-test & Cohen's d ----
+
+# --- Convert data to vector form
+juvenile_female <- female_male %>% 
+  filter(sex == "f") %>% 
+  pull(weight)
+
+juvenile_male <- female_male %>% 
+  filter(sex == "m") %>% 
+  pull(weight)
+
+# --- Two-sample t-test
+ttest_juveniles <- t.test(juvenile_female, juvenile_male)
+ttest_juveniles
+
+# --- Cohen's d
+cohen.d(juvenile_female, juvenile_male)
+```
+
+### iv) 
+Relationship between juvenile weight & hind foot length. ​Explore the relationship between juvenile snowshoe hare hind foot length (variable `hindft`, recorded in ​millimeters)​ , and weight. Include all juvenile hares in the study. Create a final visualization of juvenile hare hind foot length versus weight. Include a figure caption.
+
+```{r}
+# --- Relationship between juvenile hind foot length and weight
+
+# --- select data with recorded weight and recorded hindft
+complete_juveniles <- juveniles %>% 
+  filter(is.na(weight)==FALSE & is.na(hindft)==FALSE)
+# View(filter(juveniles, is.na(weight) | is.na(hindft))) # checking the leftout data
+
+# --- Graph
+ggplot(data= complete_juveniles, aes(y=weight, x=hindft))+
+  #geom_point( aes(col=sex), alpha = 0.4) +
+  geom_point(  alpha = 0.4) +
+  labs( x="Weight (g)", y="Hind foot length (mm)")+
+  theme_light()  # update theme
+
+
 ```
 
