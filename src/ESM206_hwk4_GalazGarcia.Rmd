@@ -25,15 +25,32 @@ hares<-read.csv(here("data","bonanza_hares.csv"))  # read data
 ## Introduction
 
 ## Data and analysis
-Size measurements, sex and age of snowshoe hares were collected and made available by Dr. Knut Kielland and colleagues at the Bonanza Creek Experimental Forest Long Term Ecological Research (LTER) site located approximately 20 km southwest of Fairbanks, Alaska. 
+Size measurements, sex and age of snowshoe hares were collected and made available by Dr. Knut Kielland and colleagues at the Bonanza Creek Experimental Forest Long Term Ecological Research (LTER) site located approximately 20 km southwest of Fairbanks, Alaska. The data contains observations of 3197 snowshoe hares obtained by capture-recapture studies conducted yearly from 1999 to 2012 in three sampling sites: Bonanza Riparian, Bonanza Mature and  Bonanza Black Spruce. 
+
+The focus of this report is on observations of juvenile snowshoe hares.
+
+-*Section 1) Annual juvenile hare trap counts*   
+Here we explore the counts by year of juvenile snowshoe hares and include a table with summary statistics. 
+
+-*Section 2)*
+********
+
+-*Section 3) Weight comparison by sex of juvenile hares*   
+In this section we explore the weights of male and female juvenile hares in each sampling site. Differences between male and female hares are explored by a two-sample t-test using a significance level of 0.05 and by calculating Cohen's *d* effect size. 
+
+-*Section 4) Relationship between juvenile weight & hind foot length*   
+Finally we explore a possible relation between hind foot length and weight of juvenile hares by conducting a simple linear regression model on these variables and the fitness of this model is discussed. 
+
+All analyses in R version 4.0.2 using RStudio Version 1.3.1093.
+
 
 ## Exploratory findings
 
-#### i) Annual juvenile hare trap counts. 
+#### Section 1) Annual juvenile hare trap counts
 
-Count the total number of juvenile (age == "j") hare trappings ​during each year​ of the study (include all grid sites), and create a ​finalized data visualization​ of the counts by year. Include a figure caption below the figure in your report.
+Yearly counts of juvenile snowshoe hares are analyzed. Sample site is not included as a variable here, though it would be it would be interesting to see if juvenile hare counts are changing equally in all sample sites. 
 
-```{r}
+```{r, echo=FALSE}
 # --- Count juveniles per year
 per_year_juveniles <- hares %>%    # copy data
   filter(age == "j") %>%       # select juvenile hares
@@ -44,15 +61,26 @@ per_year_juveniles <- hares %>%    # copy data
 ggplot( data= per_year_juveniles, aes(x =Year, y =n)) +   # select data and variables
   geom_bar(stat="identity", fill="snow4") +    # do a bar plot
   scale_x_continuous(breaks=2*(994:1006)) +   # adjust ticks
-  labs(title="Total number of juvenile snowshoe hares \n recorded over the years.",
-       y= "Number of hares") +
+  labs(#title="Juvenile snowshoe hares observations recorded yearly",
+       y= "Number of hares (n)") +
   theme_light()  # update theme
 
 # --- Summary statistics
-median(per_year_juveniles$n)
-mean(per_year_juveniles$n)
+year_median <- median(per_year_juveniles$n)
+year_mean <- mean(per_year_juveniles$n)
+year_min <- min(per_year_juveniles$n)
+year_max <- max(per_year_juveniles$n)
 ```
 
+**Figure 1.** Total juvenile snowshoe hare observations (n) during each year of the study (1999-2012). 
+
+No observations of juvenile snowshoe hares were made during 2002 and 2009, while the highest count was registered in 1999 (the first year of the study) with `r year_max` observations. On average `r year_mean` juvenile hare trappings were made from 1999 to 2012 and the median was `r year_median`. In figure one we can see a  diminishing trend in the number of juvenile hare trappings. The two exceptions are 2005, 2008 and 2011. In 2005 juvenile hare counts were 
+`r per_year_juveniles[6,2]/per_year_juveniles[5,2]` times higher than in 2004, and in 2008 counts were
+`r per_year_juveniles[9,2]/per_year_juveniles[8,2]` times higher than in 2007. 
+In 2011 the juvenile snowshoe hare count was 
+`r per_year_juveniles[11,2]/per_year_juveniles[10,2]` times higher than in 2010.
+
+While these are absolute counts, these numbers are also impacted by effort. Moving forward I would suggest to conduct the trappings on the same dates every year and space these times across different seasons. For example the first two weeks of each month every year. I imagine juveniles are mostly present during Spring, but with climate change it is possible Spring weather does not come at the same dates in 2012 as in 1998, so there might be a risk of undercounting if the counts are done during a fixed period of time every year. I would also suggest to maintain the number and location of traps constant over the years. 
 
 ### ii)
 Create a finalized data visualization (or visualizations) in which you compare **juvenile hare weights by sex and site (grid)** (ignore other variables). You should include groups where these variables are not recorded (`NA`). Include finalized figure captions below your visualization(s).
