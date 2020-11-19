@@ -1,5 +1,6 @@
 ---
-title: "Homework 4 - Task 2"
+title: "Mini “exploratory report” on juvenile snowshoe hares in Bonanza Creek Experimental Forest (Long Term Ecological Research site)"
+subtitle: "Homework 4 - Task 2"
 author: "Carmen Galaz-García"
 date: "11/15/2020"
 output: html_document
@@ -15,12 +16,18 @@ library(ggbeeswarm) # make beeswarm graphs
 library(kableExtra)  # create nice tables
 library(effsize)    # includes cohen's d
 
+library(broom)
+library(ggpubr)
 
 hares<-read.csv(here("data","bonanza_hares.csv"))  # read data
 ```
 
+## Introduction
 
-### c) Exploratory findings
+## Data and analysis
+Size measurements, sex and age of snowshoe hares were collected and made available by Dr. Knut Kielland and colleagues at the Bonanza Creek Experimental Forest Long Term Ecological Research (LTER) site located approximately 20 km southwest of Fairbanks, Alaska. 
+
+## Exploratory findings
 
 #### i) Annual juvenile hare trap counts. 
 
@@ -121,7 +128,7 @@ Further compare mean weights for **juvenile male and female snowshoe hares** inc
 # --- checking how many hares don't have weight registered
 #View(filter(juveniles,is.na(weight)))    # seven juvenile hares with weight==NA
 
-# --- separate data of female and male juvenile hares iwth recorded weight
+# --- separate data of female and male juvenile hares with recorded weight
 female_male <-  juveniles %>%   # copy data
   filter(!is.na(weight)) %>%           # select those with recorded weight
   filter(!is.na(sex))                  # select those with recorded sex
@@ -131,6 +138,7 @@ female_male_summary <- female_male %>%   # copy data
   group_by(sex) %>% 
   summarize(mean_weight = mean(weight, na.rm=TRUE),
             sd_weight = sd(weight, na.rm=TRUE),
+            median_weight = median(weight, na.rm=TRUE),
             sample_size = n())
 
 # --- Update tags for table
@@ -141,6 +149,7 @@ female_male_summary[2,1] <- "male"
 female_male_summary %>% kable( col.names = c("Sex", 
                                        "Mean weight (g)", 
                                        "Standard deviation (g)",
+                                       "Median weight (g)",
                                        "Sample size (n)" ) 
                          ) %>% 
    kable_styling(full_width = FALSE)
@@ -199,9 +208,58 @@ complete_juveniles <- juveniles %>%
 ggplot(data= complete_juveniles, aes(y=weight, x=hindft))+
   #geom_point( aes(col=sex), alpha = 0.4) +
   geom_point(  alpha = 0.4) +
-  labs( x="Weight (g)", y="Hind foot length (mm)")+
+  labs( y="Weight (g)", 
+        x="Hind foot length (mm)")+
   theme_light()  # update theme
 
 
+```
+
+Upon seeing your graph, your “boss” tells you to try out​ linear regression to describe how juvenile snowshoe hare weight changes with respect to hind foot length. Try it out (the ​only​ variables you are expected to include here are hind foot length and weight, using data for all juvenile hares in the data, e.g. you are not expected to explore impacts of sex, site, etc.), and check the model diagnostics.
+In 2 - 3 sentences below your figure, describe the outcome of your linear 2​
+regressionexploration(e.g.slopeinterpretation,R​ value,andPearson's​r correlation) and touch briefly on which assumption(s) of linear regression
+may be a concern, and additional thoughts you have about how well (or not well...) the linear model describes the relationship. What worries you?
+
+
+```{r}
+# --- Linear model for weight(hindft)
+juveniles_lm <- lm(weight ~ hindft, data=complete_juveniles)
+summary(juveniles_lm)
+```
+
+Multiple R-squared is 0.2988, which means that 29.88% of variance in  weight is explained by hind foot length. 
+
+```{r}
+# --- Accessing data in linear model
+
+# model outputs converted to data frame
+tidy_juveniles_lm <- broom::tidy(juveniles_lm) 
+
+```
+
+### Exploring model assumptions
+
+```{r}
+# --- Checking model assumptions
+plot(juveniles_lm)
+
+```
+
+```{r}
+# --- Visualize the model
+ggplot( data=complete_juveniles, aes(x=hindft, y=weight)) +
+  geom_point(alpha=0.4)+
+  geom_smooth( method = "lm",
+               color= "red",
+               size =0.5, 
+               fill="gray10",
+               alpha=0.5)+
+  theme_light()
+```
+
+```{r}
+# --- Finding Pearson's r for correlation
+juveniles_cor <- cor.test(complete_juveniles$hindft, complete_juveniles$weight)
+juveniles_cor
 ```
 
