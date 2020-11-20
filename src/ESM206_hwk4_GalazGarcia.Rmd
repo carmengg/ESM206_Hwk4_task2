@@ -30,21 +30,22 @@ juveniles <- hares %>% filter(age=="j")
 ## Data and analysis
 Size measurements, sex and age of snowshoe hares were collected and made available by Dr. Knut Kielland and colleagues at the Bonanza Creek Experimental Forest Long Term Ecological Research (LTER) site located approximately 20 km southwest of Fairbanks, Alaska. The data contains observations of 3197 snowshoe hares obtained by capture-recapture studies conducted yearly from 1999 to 2012 in three sampling sites: Bonanza Riparian, Bonanza Mature and  Bonanza Black Spruce. 
 
-The focus of this report is on observations of juvenile snowshoe hares.
+This report has four sections, each focused on analyzing different data related to *juvenile* snowshoe hares.
 
--*Section 1) Annual juvenile hare trap counts*   
-Here we explore the counts by year of juvenile snowshoe hares and include a table with summary statistics. 
+-**Section 1) Annual juvenile hare trap counts**   
+Exploration of the counts by year of juvenile snowshoe hares.
 
--*Section 2) Juvenile hare weights by sex and sample site*
-********
+-**Section 2) Juvenile hare weights by sex and sample site**   
+Visualization and analysis of descriptive statistics for the weight of male and female juvenile snowshoe hares across the three sampling sites. 
 
--*Section 3) Weight comparison by sex of juvenile hares*   
-In this section we explore the weights of male and female juvenile hares in each sampling site. Differences between male and female hares are explored by a two-sample t-test using a significance level of 0.05 and by calculating Cohen's *d* effect size. 
+-**Section 3) Weight comparison by sex of juvenile hares**   
+Analysis of the difference in average weight of male and female juvenile hares.
+To do so we use a Welch two-sample t-test with a significance level of 0.05 ($\alpha$) and calculate Cohen's *d* effect size. 
 
--*Section 4) Relationship between juvenile weight & hind foot length*   
-Finally we explore a possible relation between hind foot length and weight of juvenile hares by conducting a simple linear regression model on these variables and the fitness of this model is discussed. 
+-**Section 4) Relationship between juvenile weight & hind foot length**   
+Analysis of a possible relation between hind foot length and weight of juvenile hares, conducted using a simple linear regression model on these variables. Fitness of this model is discussed. 
 
-All analyses in R version 4.0.2 using RStudio Version 1.3.1093.
+All analyses are in R version 4.0.2 using RStudio Version 1.3.1093.
 
 
 ## Exploratory findings
@@ -93,7 +94,7 @@ While these are absolute counts, these numbers are also impacted by effort. Movi
 ### Section 2) Juvenile hare weights by sex and sample site
 
 ```{r, message=FALSE, echo=FALSE}
-# - select data
+# --- Select data
 summary_juveniles <- juveniles %>% 
   group_by(grid, sex) %>% 
   summarize(mean = mean(weight, na.rm=TRUE),
@@ -126,12 +127,12 @@ In Bonanza Mature and Bonanza Riparian the average and standard deviations of we
 
 weight_summary_table <- summary_juveniles %>% 
   mutate(
-       grid = case_when( # -- update names of sample sites
+       grid = case_when( # update names of sample sites
          grid == "bonbs" ~ "Bonanza Black Spruce",
          grid == "bonrip" ~ "Bonanza Riparian", 
          grid == "bonmat" ~ "Bonanza Mature"
        ),
-       sex = case_when(
+       sex = case_when(   # update names of sex
          sex == "f" ~ "female",
          sex == "m" ~"male"
        )) %>% 
@@ -159,7 +160,7 @@ grid_names <- c(bonbs="Bonanza Black Spruce",
                 bonrip="Bonanza Riparian", 
                 bonmat="Bonanza Mature")
 
-# - make beeswax plot with added box-plot on top
+# -- make beeswax plot with added box-plot on top
 ggplot(data = juveniles, aes(x = sex, y = weight), ) +
   geom_beeswarm(show.legend=FALSE,
                 aes(color=sex),
@@ -191,15 +192,11 @@ Data: Kielland et al. (2017)
 
 
 
-### iii) Juvenile weight comparison (male & female snowshoe hares).
-Further compare mean weights for **juvenile male and female snowshoe hares** included in this study. In this section, you should include:
-● A finalized table containing the mean, standard deviation, and sample size for male and female juvenile snowshoe hares, with a table caption (remember, this is placed *above* the table in your report)
-● A 2 - 3 sentence comprehensive statement of the means comparison, including at least:
-○ The actual difference in means
-○ Effect size (Cohen's *d*)
-○ Outcome of a two-sample t-test
+### Section 3) Weight comparison in male & female snowshoe hares
 
-```{r}
+```{r, echo=FALSE, message=FALSE}
+# --- Data Selection & Summary Statistics
+
 # --- checking how many hares don't have weight registered
 #View(filter(juveniles,is.na(weight)))    # seven juvenile hares with weight==NA
 
@@ -208,27 +205,16 @@ female_male <-  juveniles %>%   # copy data
   filter(!is.na(weight)) %>%           # select those with recorded weight
   filter(!is.na(sex))                  # select those with recorded sex
 
-# --- create summary data for weight of female and male hares
+# --- create descriptive statistics for weight of female and male hares
 female_male_summary <- female_male %>%   # copy data
   group_by(sex) %>% 
-  summarize(mean_weight = mean(weight, na.rm=TRUE),
-            sd_weight = sd(weight, na.rm=TRUE),
-            median_weight = median(weight, na.rm=TRUE),
-            sample_size = n())
+  summarize(mean = mean(weight, na.rm=TRUE),
+            sd = sd(weight, na.rm=TRUE),
+            #median = median(weight, na.rm=TRUE),
+            n = n())
 
-# --- Update tags for table
-female_male_summary[1,1] <- "female"  
-female_male_summary[2,1] <- "male"  
-
-# --- create table
-female_male_summary %>% kable( col.names = c("Sex", 
-                                       "Mean weight (g)", 
-                                       "Standard deviation (g)",
-                                       "Median weight (g)",
-                                       "Sample size (n)" ) 
-                         ) %>% 
-   kable_styling(full_width = FALSE)
 ```
+
 
 
 ```{r, include=FALSE}
@@ -239,7 +225,7 @@ ggplot(data = female_male, aes(x = weight)) +
   geom_histogram(bins = 25) +
   facet_wrap(~sex)
 
-# QQ Plots: both graphs close to a line
+# QQ Plots: both graphs close to a line, males a bit wobbly on bottom
 ggplot(data= female_male, aes(sample = weight)) +
   geom_qq() +
   facet_wrap(~sex)
@@ -247,8 +233,7 @@ ggplot(data= female_male, aes(sample = weight)) +
 ```
 
 
-
-```{r}
+```{r, include=FALSE}
 # --- Two-sample t-test & Cohen's d ----
 
 # --- Convert data to vector form
@@ -260,13 +245,56 @@ juvenile_male <- female_male %>%
   filter(sex == "m") %>% 
   pull(weight)
 
-# --- Two-sample t-test
-ttest_juveniles <- t.test(juvenile_female, juvenile_male)
-ttest_juveniles
+# --- Two-sample t-test ---
+ttest_juveniles <- t.test(juvenile_male,juvenile_female) %>% 
+  tidy # make test parameters available for in-line referencing
 
-# --- Cohen's d
-cohen.d(juvenile_female, juvenile_male)
+# --- Cohen's d ---
+juveniles_effsize <- cohen.d(juvenile_male,juvenile_female)
 ```
+
+Out of 378 observations of juvenile snowshoe hares we excluded from this analysis those which did not have the hare's sex or weight recorded, 
+this left us with 
+`r female_male_summary$n[1] + female_male_summary$n[2]` observations  
+(`r female_male_summary$n[1]` females and
+`r female_male_summary$n[2]`
+males). 
+
+On average for juvenile snowshoe hares, males weigh more than females
+(`r round(female_male_summary$mean[2],2)` $\pm$ 
+`r round(female_male_summary$sd[2], 2)` 
+and 
+`r round(female_male_summary$mean[1],2)` $\pm$ 
+`r round(female_male_summary$sd[1], 2)`  grams, respectively; mean $\pm$ 1 standard deviation).
+The absolute difference in means is 
+`r round(female_male_summary$mean[2]-female_male_summary$mean[1])` grams, 
+so male hares weigh 
+`r round((female_male_summary$mean[2]-female_male_summary$mean[1])/female_male_summary$mean[1]*100)`% more than females. 
+This difference in means is significant (Welch's two-sample t-test: t(`r round(ttest_juveniles$parameter,2)`) 
+= `r round(ttest_juveniles$statistic,2)`, 
+p=`r round(ttest_juveniles$p.value,4)` < $\alpha$), 
+and the effect size is moderate 
+(Cohen's *d* = `r round(juveniles_effsize$estimate,2)`).
+
+**Table 2.** Descriptive statistics (mean, standard deviation, and sample size) for female and male juvenile snowshoe hares. Data: Kielland et al. (2017)
+```{r, echo=FALSE}
+# --- Create summary table
+
+# -- update tags for table
+female_male_summary[1,1] <- "female"  
+female_male_summary[2,1] <- "male"  
+
+# -- make table
+female_male_summary %>% kable( col.names = c("Sex", 
+                                       "Mean weight (g)", 
+                                       "Standard deviation (g)",
+                                       #"Median weight (g)",
+                                       "Sample size (n)" ) 
+                         ) %>% 
+   kable_styling(full_width = FALSE)
+```
+
+
 
 ### iv) 
 Relationship between juvenile weight & hind foot length. ​Explore the relationship between juvenile snowshoe hare hind foot length (variable `hindft`, recorded in ​millimeters)​ , and weight. Include all juvenile hares in the study. Create a final visualization of juvenile hare hind foot length versus weight. Include a figure caption.
