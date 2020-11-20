@@ -20,6 +20,9 @@ library(broom)
 library(ggpubr)
 
 hares<-read.csv(here("data","bonanza_hares.csv"))  # read data
+
+# - selecting data for juvenile hares (used throughout)
+juveniles <- hares %>% filter(age=="j")
 ```
 
 ## Introduction
@@ -46,7 +49,7 @@ All analyses in R version 4.0.2 using RStudio Version 1.3.1093.
 
 ## Exploratory findings
 
-#### Section 1) Annual juvenile hare trap counts
+### Section 1) Annual juvenile hare trap counts
 
 Yearly counts of juvenile snowshoe hares are analyzed. 
 In total 378 observations of juvenile snowshoe hares were recorded during the study.
@@ -86,83 +89,53 @@ In 2011 the juvenile snowshoe hare count was
 While these are absolute counts, these numbers are also impacted by effort. Moving forward I would suggest to conduct the trappings on the same dates every year and space these times across different seasons. For example the first two weeks of each month every year. I imagine juveniles are mostly present during Spring, but with climate change it is possible Spring weather does not come at the same dates in 2012 as in 1998, so there might be a risk of undercounting if the counts are done during a fixed period of time every year. I would also suggest to maintain the number and location of traps constant over the years. 
 
 
-#### Section 2) Juvenile hare weights by sex and sample site
+### Section 2) Juvenile hare weights by sex and sample site
 
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# --- Exploring data
-sex_site_juveniles <- hares %>%    # copy data
-  filter(age == "j") %>%           # select juvenile hares
-  count(sex, grid)
-#sex_site_juveniles
 
-# --- Selecting data for juvenile hares
-juveniles <- hares %>% filter(age=="j")
 
-# --- Create graph of juvenile hares divided by sex and grid -----
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
+# ---  Create graph of juvenile weight divided by sex and grid
 
 # -- individual figure titles
 grid_names <- c(bonbs="Bonanza Black Spruce", 
                 bonrip="Bonanza Riparian", 
                 bonmat="Bonanza Mature")
 
-#-- actual graph
-ggplot(data=juveniles, aes(x=sex, y=weight))+
-  geom_boxplot(aes(fill=sex), show.legend = FALSE)+  # remove legend
-  #geom_boxplot(fill=0.1)+  # makes boxes transparent
-  facet_wrap(~grid,
-             labeller = 
-               labeller( grid = grid_names)) + # update individual fig titles
-  labs( x="sex",
-        y="weight (g)") +
-  scale_x_discrete(labels = c("female", "male", "NA")) +
+# - make beeswax plot with added box-plot on top
+ggplot(data = juveniles, aes(x = sex, y = weight), ) +
+  geom_beeswarm(show.legend=FALSE,
+                aes(color=sex),
+                size = 4,    # point size
+                alpha = 0.6, # transparency
+                pch = 20,    # point shape
+                cex=2.5    # scatters points
+                ) +
+  #scale_color_manual(values = c("indianred1","burlywood1","green")) +
+  geom_boxplot(fill = NA, width = 0.2, outlier.color = NA) +
+  stat_summary(fun=mean, 
+               geom="point", 
+               shape=20, 
+               size=3, 
+               color="black", 
+               fill="black")+
+  facet_wrap(~grid,   # make one graph per grid element
+             labeller = labeller( grid = grid_names)) +   # update individual titles     
+  labs(y="weight (g)") +
+  scale_x_discrete(labels = c("female", "male", "NA")) +   # update x-axis labels 
   theme_light()  # update theme
 
-
-#bonbs_NA <- juveniles %>%    # checking there's actually no data here
-  # filter(grid=="bonbs" & sex=="NA")
 ```
 
 **Figure 2.** 
 
-
-```{r, message=FALSE, echo=FALSE, warning=FALSE}
+```{r}
+# - select data
 summary_juveniles <- juveniles %>% 
   group_by(sex, grid) %>% 
   summarize(mean_weight = mean(weight, na.rm=TRUE),
             sd_weight = sd(weight, na.rm=TRUE),
             sample_size = n())
-
-ggplot() +
-  geom_beeswarm(data = juveniles,   # use data from juveniles
-                aes(x = sex,        
-                    y = weight,
-                    color = sex     # color points by sex
-                    ),
-                size = 2,    # point size
-                alpha = 0.6, # transparency
-                pch = 16,    # ?
-                cex=2.5      # scatters points
-                ) +
-  facet_wrap(~grid,   # make one graph per grid element
-             labeller = 
-               labeller( grid = grid_names)) +   # update individual titles     
-  labs(y="weight (g)")+
-  scale_x_discrete(labels = c("female", "male", "NA")) +   # update x-axis labels
-  geom_point(data = summary_juveniles, 
-             aes(x = sex, y = mean_weight),   # 
-             color = "firebrick",
-             #show.legend = FALSE,
-             size = 2.5) +
-  geom_errorbar(data = summary_juveniles, 
-                aes(x = sex, 
-                    ymin = mean_weight - sd_weight,
-                    ymax = mean_weight + sd_weight),
-                color = "firebrick",
-                #show.legend = FALSE,
-                width = 0.1) +
-                theme_light()+  # update theme
-                theme(legend.position = "none")    # removes legend
 
 ```
 
