@@ -74,6 +74,7 @@ ggplot( data= per_year_juveniles, aes(x =Year, y =n)) +   # select data and vari
 ```
 
 **Figure 1.** Total juvenile snowshoe hare observations (n) during each year of the study (1999-2012). 
+Data: Kielland et al. (2017)
 
 No observations of juvenile snowshoe hares were made during 2002 and 2009, while the highest count was registered in 1999 (the first year of the study) with 
 `r max(per_year_juveniles$n)` observations. 
@@ -91,8 +92,64 @@ While these are absolute counts, these numbers are also impacted by effort. Movi
 
 ### Section 2) Juvenile hare weights by sex and sample site
 
+```{r, message=FALSE, echo=FALSE}
+# - select data
+summary_juveniles <- juveniles %>% 
+  group_by(grid, sex) %>% 
+  summarize(mean = mean(weight, na.rm=TRUE),
+            sd = sd(weight, na.rm=TRUE),
+            #median = median(weight, na.rm=TRUE),
+            n = n()
+            )
+
+```
+
+Weights (measured in grams) of male and female juvenile snowshoe hares are compared across the three sampling sites: Bonanza Black Spruce, Bonanza Mature and Bonanza Riparian. 
+From the 378 observations of juvenile snowshoe hares recorded during the study, 7 of them did not have the hare's weight recorded (3 females and 4 of unidentified sex). 
 
 
+In all three sites the average weight for male juvenile hares is greater than that of female juvenile hares. 
+Juvenile hares were biggest at the Bonanza Black Spruce sampling site, with weight of male hares being 
+`r round(summary_juveniles$mean[2])` $\pm$ 
+`r round(summary_juveniles$sd[2])` grams
+(n= `r summary_juveniles$n[2]`; mean $\pm$ 1 standard deviation) and weight of female hares being
+`r round(summary_juveniles$mean[1])` $\pm$ 
+`r round(summary_juveniles$sd[1])` grams
+(n= `r summary_juveniles$n[1]`). 
+In Bonanza Mature and Bonanza Riparian the average and standard deviations of weights were similar for both female and male juvenile hares. 
+
+**Table 1.** Descriptive statistics (mean, standard deviation and sample size) at each sample site for female and male juvenile snowshoe hares. Data: Kielland et al. (2017)
+
+```{r message=FALSE, warning=FALSE, echo= FALSE}
+
+# --- Create table with summar statistics 
+
+weight_summary_table <- summary_juveniles %>% 
+  mutate(
+       grid = case_when( # -- update names of sample sites
+         grid == "bonbs" ~ "Bonanza Black Spruce",
+         grid == "bonrip" ~ "Bonanza Riparian", 
+         grid == "bonmat" ~ "Bonanza Mature"
+       ),
+       sex = case_when(
+         sex == "f" ~ "female",
+         sex == "m" ~"male"
+       )) %>% 
+  kable( col.names = c("Sample site", 
+                        "Sex", 
+                        "Mean weight (g)",
+                        "Standard deviation (g)",
+                        #"Median weight (g)",
+                        "Sample size (n)" ) 
+                         ) %>% 
+   kable_styling(full_width = FALSE)
+weight_summary_table
+```
+
+Distribution of weights for female and male juvenile hares appear to be more normal at the Bonanza Riparian site and rather uniform at the other two sites. 
+Note that the Bonanza Riparian site has almost four times as many observations than the other two sites for female hares. 
+For male hares Bonanza Riparian site has about twice as many observations than Bonanza Mature and almost 10 times more than Bonanza Black Spruce. 
+In all three sites and for both sexes the eight mean and median are similar. 
 
 ```{r, message=FALSE, echo=FALSE, warning=FALSE}
 # ---  Create graph of juvenile weight divided by sex and grid
@@ -109,9 +166,8 @@ ggplot(data = juveniles, aes(x = sex, y = weight), ) +
                 size = 4,    # point size
                 alpha = 0.6, # transparency
                 pch = 20,    # point shape
-                cex=2.5    # scatters points
+                cex=2.5      # scatters points
                 ) +
-  #scale_color_manual(values = c("indianred1","burlywood1","green")) +
   geom_boxplot(fill = NA, width = 0.2, outlier.color = NA) +
   stat_summary(fun=mean, 
                geom="point", 
@@ -127,17 +183,13 @@ ggplot(data = juveniles, aes(x = sex, y = weight), ) +
 
 ```
 
-**Figure 2.** 
+**Figure 2.** Weight (g) of juvenile snowshoe hares recorded in each sampling site, divided by sex. 
+Red (female), blue (male) and gray (unidentified) points indicate individual observations of weight (g) of a juvenile snowshoe hare.
+Box endpoints indicate the 25^th^ and 75^th^ percentile values, 
+the black line and black point within the box indicate the median and mean value for each species, respectively.
+Data: Kielland et al. (2017)
 
-```{r}
-# - select data
-summary_juveniles <- juveniles %>% 
-  group_by(sex, grid) %>% 
-  summarize(mean_weight = mean(weight, na.rm=TRUE),
-            sd_weight = sd(weight, na.rm=TRUE),
-            sample_size = n())
 
-```
 
 ### iii) Juvenile weight comparison (male & female snowshoe hares).
 Further compare mean weights for **juvenile male and female snowshoe hares** included in this study. In this section, you should include:
