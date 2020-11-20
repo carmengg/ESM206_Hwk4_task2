@@ -32,7 +32,7 @@ The focus of this report is on observations of juvenile snowshoe hares.
 -*Section 1) Annual juvenile hare trap counts*   
 Here we explore the counts by year of juvenile snowshoe hares and include a table with summary statistics. 
 
--*Section 2)*
+-*Section 2) Juvenile hare weights by sex and sample site*
 ********
 
 -*Section 3) Weight comparison by sex of juvenile hares*   
@@ -48,7 +48,9 @@ All analyses in R version 4.0.2 using RStudio Version 1.3.1093.
 
 #### Section 1) Annual juvenile hare trap counts
 
-Yearly counts of juvenile snowshoe hares are analyzed. Sample site is not included as a variable here, though it would be it would be interesting to see if juvenile hare counts are changing equally in all sample sites. 
+Yearly counts of juvenile snowshoe hares are analyzed. 
+In total 378 observations of juvenile snowshoe hares were recorded during the study.
+Sample site is not included as a variable here, though it would be it would be interesting to see if juvenile hare counts are changing equally in all sample sites. 
 
 ```{r, echo=FALSE}
 # --- Count juveniles per year
@@ -65,16 +67,17 @@ ggplot( data= per_year_juveniles, aes(x =Year, y =n)) +   # select data and vari
        y= "Number of hares (n)") +
   theme_light()  # update theme
 
-# --- Summary statistics
-year_median <- median(per_year_juveniles$n)
-year_mean <- mean(per_year_juveniles$n)
-year_min <- min(per_year_juveniles$n)
-year_max <- max(per_year_juveniles$n)
+
 ```
 
 **Figure 1.** Total juvenile snowshoe hare observations (n) during each year of the study (1999-2012). 
 
-No observations of juvenile snowshoe hares were made during 2002 and 2009, while the highest count was registered in 1999 (the first year of the study) with `r year_max` observations. On average `r year_mean` juvenile hare trappings were made from 1999 to 2012 and the median was `r year_median`. In figure one we can see a  diminishing trend in the number of juvenile hare trappings. The two exceptions are 2005, 2008 and 2011. In 2005 juvenile hare counts were 
+No observations of juvenile snowshoe hares were made during 2002 and 2009, while the highest count was registered in 1999 (the first year of the study) with 
+`r max(per_year_juveniles$n)` observations. 
+On average `r mean(per_year_juveniles$n)` 
+juvenile hare trappings were made from 1999 to 2012 and the median was `r median(per_year_juveniles$n)`. 
+In figure one we can see a  diminishing trend in the number of juvenile hare trappings. The two exceptions are 2005, 2008 and 2011. 
+In 2005 juvenile hare counts were 
 `r per_year_juveniles[6,2]/per_year_juveniles[5,2]` times higher than in 2004, and in 2008 counts were
 `r per_year_juveniles[9,2]/per_year_juveniles[8,2]` times higher than in 2007. 
 In 2011 the juvenile snowshoe hare count was 
@@ -82,24 +85,37 @@ In 2011 the juvenile snowshoe hare count was
 
 While these are absolute counts, these numbers are also impacted by effort. Moving forward I would suggest to conduct the trappings on the same dates every year and space these times across different seasons. For example the first two weeks of each month every year. I imagine juveniles are mostly present during Spring, but with climate change it is possible Spring weather does not come at the same dates in 2012 as in 1998, so there might be a risk of undercounting if the counts are done during a fixed period of time every year. I would also suggest to maintain the number and location of traps constant over the years. 
 
-### ii)
-Create a finalized data visualization (or visualizations) in which you compare **juvenile hare weights by sex and site (grid)** (ignore other variables). You should include groups where these variables are not recorded (`NA`). Include finalized figure captions below your visualization(s).
 
-```{r}
+#### Section 2) Juvenile hare weights by sex and sample site
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # --- Exploring data
 sex_site_juveniles <- hares %>%    # copy data
-  filter(age == "j") %>%       # select juvenile hares
+  filter(age == "j") %>%           # select juvenile hares
   count(sex, grid)
-sex_site_juveniles
+#sex_site_juveniles
 
 # --- Selecting data for juvenile hares
 juveniles <- hares %>% filter(age=="j")
 
-# --- Create graph of juvenile hares divided by sex and grid
+# --- Create graph of juvenile hares divided by sex and grid -----
+
+# -- individual figure titles
+grid_names <- c(bonbs="Bonanza Black Spruce", 
+                bonrip="Bonanza Riparian", 
+                bonmat="Bonanza Mature")
+
+#-- actual graph
 ggplot(data=juveniles, aes(x=sex, y=weight))+
   geom_boxplot(aes(fill=sex), show.legend = FALSE)+  # remove legend
   #geom_boxplot(fill=0.1)+  # makes boxes transparent
-  facet_wrap(~grid) +
+  facet_wrap(~grid,
+             labeller = 
+               labeller( grid = grid_names)) + # update individual fig titles
+  labs( x="sex",
+        y="weight (g)") +
+  scale_x_discrete(labels = c("female", "male", "NA")) +
   theme_light()  # update theme
 
 
@@ -107,7 +123,10 @@ ggplot(data=juveniles, aes(x=sex, y=weight))+
   # filter(grid=="bonbs" & sex=="NA")
 ```
 
-```{r}
+**Figure 2.** 
+
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
 summary_juveniles <- juveniles %>% 
   group_by(sex, grid) %>% 
   summarize(mean_weight = mean(weight, na.rm=TRUE),
@@ -125,8 +144,10 @@ ggplot() +
                 pch = 16,    # ?
                 cex=2.5      # scatters points
                 ) +
-  facet_wrap(~grid) +        # make one graph per grid element
-  theme(legend.position = "none") +    # removes legend
+  facet_wrap(~grid,   # make one graph per grid element
+             labeller = 
+               labeller( grid = grid_names)) +   # update individual titles     
+  labs(y="weight (g)")+
   scale_x_discrete(labels = c("female", "male", "NA")) +   # update x-axis labels
   geom_point(data = summary_juveniles, 
              aes(x = sex, y = mean_weight),   # 
@@ -139,8 +160,9 @@ ggplot() +
                     ymax = mean_weight + sd_weight),
                 color = "firebrick",
                 #show.legend = FALSE,
-                width = 0.1)
-                #+ theme_light()  # update theme
+                width = 0.1) +
+                theme_light()+  # update theme
+                theme(legend.position = "none")    # removes legend
 
 ```
 
