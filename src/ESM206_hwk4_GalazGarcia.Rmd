@@ -178,7 +178,7 @@ ggplot(data = juveniles, aes(x = sex, y = weight), ) +
                fill="black")+
   facet_wrap(~grid,   # make one graph per grid element
              labeller = labeller( grid = grid_names)) +   # update individual titles     
-  labs(y="weight (g)") +
+  labs(y="Weight (g)", x="Sex") +
   scale_x_discrete(labels = c("female", "male", "NA")) +   # update x-axis labels 
   theme_light()  # update theme
 
@@ -273,7 +273,7 @@ so male hares weigh
 This difference in means is significant (Welch's two-sample t-test: t(`r round(ttest_juveniles$parameter,2)`) 
 = `r round(ttest_juveniles$statistic,2)`, 
 p=`r round(ttest_juveniles$p.value,4)` < $\alpha$), 
-and the effect size is moderate 
+though the effect size is small 
 (Cohen's *d* = `r round(juveniles_effsize$estimate,2)`).
 
 **Table 2.** Descriptive statistics (mean, standard deviation, and sample size) for female and male juvenile snowshoe hares. Data: Kielland et al. (2017)
@@ -296,16 +296,50 @@ female_male_summary %>% kable( col.names = c("Sex",
 
 
 
-### iv) 
-Relationship between juvenile weight & hind foot length. ​Explore the relationship between juvenile snowshoe hare hind foot length (variable `hindft`, recorded in ​millimeters)​ , and weight. Include all juvenile hares in the study. Create a final visualization of juvenile hare hind foot length versus weight. Include a figure caption.
+### Section 4) Relationship between juvenile weight & hind foot length
 
-```{r}
-# --- Relationship between juvenile hind foot length and weight
+In this section we explore the relationship between juvenile snowshoe hare hind foot length and weight. 
+Out of the total 378 observations, we run the analysis on the 249 observations that include records of both hind foot length and weight.
+Sex is not included as a variable in this analysis, though it would be appropriate to consider this too. 
 
-# --- select data with recorded weight and recorded hindft
+
+```{r include=FALSE}
+# --- Linear Model: weight(hindft) ---
+
+# -- select data with recorded weight and recorded hindft
 complete_juveniles <- juveniles %>% 
   filter(is.na(weight)==FALSE & is.na(hindft)==FALSE)
 # View(filter(juveniles, is.na(weight) | is.na(hindft))) # checking the leftout data
+
+# -- linear model for weight(hindft)
+juveniles_lm <- lm(weight ~ hindft, data=complete_juveniles)
+summary(juveniles_lm)
+
+# -- accessing data in linear model
+# tidy versions of model outputs tp use in-text (converted to data frame)
+tidy_juveniles_lm <- broom::tidy(juveniles_lm) 
+juveniles_lm_glance <- glance(juveniles_lm)
+
+# -- Pearson's R correlation
+juveniles_corr <- cor.test(complete_juveniles$weight, complete_juveniles$hindft) %>% 
+  tidy
+
+```
+
+In Figure 3 we can see most of the data follows a linear trend, 
+thought there is a significant number of points on the bottom right part of the graph which do not behave linearly. 
+To analyze a possible linear dependence of body mass with respect to flipper length we used simple linear regression. 
+This analysis revealed that variance in weight of juvenile hares is not quite explained by hind foot length
+(p < 0.001, 
+R^2^ = `r round(juveniles_lm_glance$r.squared,2)`).
+The average slope of the linear model is
+$\beta$ = `r round(tidy_juveniles_lm$estimate[2], 2)` g mm^-1^ (i.e., for each one millimeter increase in hind foot length we expect an average increase in weight of `r round(tidy_juveniles_lm$estimate[2], 2)` g).
+A Pearson's *r* of 
+`r round(juveniles_corr$estimate,2)` (p < 0.001)
+shows weight is positively correlated to hind foot length with medium strength. 
+ 
+```{r, message=FALSE, echo=FALSE}
+# --- Relationship between juvenile hind foot length and weight
 
 # --- Graph
 ggplot(data= complete_juveniles, aes(y=weight, x=hindft))+
@@ -313,32 +347,20 @@ ggplot(data= complete_juveniles, aes(y=weight, x=hindft))+
   geom_point(  alpha = 0.4) +
   labs( y="Weight (g)", 
         x="Hind foot length (mm)")+
+  geom_smooth(method = "lm", se = FALSE, color = "gray30")+
   theme_light()  # update theme
 
 
 ```
+**Figure 2.** 
+Relationship between hind foot length (mm) and weight (g) of juvenile snowshoe hares. Points indicate individual hare measurements. 
+Linear model summary: 
+$\beta$~1~ = `r round(tidy_juveniles_lm$estimate[2],2)` g mm^-1^, 
+p < 0.001, 
+R^2^ = `r round(juveniles_lm_glance$r.squared,2)`, 
+Pearson's *r* = `r round(juveniles_corr$estimate,2)`). 
+Data: Kielland et al. (2017)
 
-Upon seeing your graph, your “boss” tells you to try out​ linear regression to describe how juvenile snowshoe hare weight changes with respect to hind foot length. Try it out (the ​only​ variables you are expected to include here are hind foot length and weight, using data for all juvenile hares in the data, e.g. you are not expected to explore impacts of sex, site, etc.), and check the model diagnostics.
-In 2 - 3 sentences below your figure, describe the outcome of your linear 2​
-regressionexploration(e.g.slopeinterpretation,R​ value,andPearson's​r correlation) and touch briefly on which assumption(s) of linear regression
-may be a concern, and additional thoughts you have about how well (or not well...) the linear model describes the relationship. What worries you?
-
-
-```{r}
-# --- Linear model for weight(hindft)
-juveniles_lm <- lm(weight ~ hindft, data=complete_juveniles)
-summary(juveniles_lm)
-```
-
-Multiple R-squared is 0.2988, which means that 29.88% of variance in  weight is explained by hind foot length. 
-
-```{r}
-# --- Accessing data in linear model
-
-# model outputs converted to data frame
-tidy_juveniles_lm <- broom::tidy(juveniles_lm) 
-
-```
 
 ### Exploring model assumptions
 
@@ -360,9 +382,4 @@ ggplot( data=complete_juveniles, aes(x=hindft, y=weight)) +
   theme_light()
 ```
 
-```{r}
-# --- Finding Pearson's r for correlation
-juveniles_cor <- cor.test(complete_juveniles$hindft, complete_juveniles$weight)
-juveniles_cor
-```
 
