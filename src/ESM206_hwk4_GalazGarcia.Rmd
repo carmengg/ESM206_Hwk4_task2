@@ -177,7 +177,7 @@ ggplot(data = juveniles, aes(x = sex, y = weight), ) +
                color="black", 
                fill="black")+
   facet_wrap(~grid,   # make one graph per grid element
-             labeller = labeller( grid = grid_names)) +   # update individual titles     
+             labeller = labeller( grid = grid_names)) +   # update individual titles
   labs(y="Weight (g)", x="Sex") +
   scale_x_discrete(labels = c("female", "male", "NA")) +   # update x-axis labels 
   theme_light()  # update theme
@@ -300,7 +300,7 @@ female_male_summary %>% kable( col.names = c("Sex",
 
 In this section we explore the relationship between juvenile snowshoe hare hind foot length and weight. 
 Out of the total 378 observations, we run the analysis on the 249 observations that include records of both hind foot length and weight.
-Sex is not included as a variable in this analysis, though it would be appropriate to consider this too. 
+
 
 
 ```{r include=FALSE}
@@ -343,7 +343,6 @@ shows weight is positively correlated to hind foot length with medium strength.
 
 # --- Graph
 ggplot(data= complete_juveniles, aes(y=weight, x=hindft))+
-  #geom_point( aes(col=sex), alpha = 0.4) +
   geom_point(  alpha = 0.4) +
   labs( y="Weight (g)", 
         x="Hind foot length (mm)")+
@@ -352,7 +351,7 @@ ggplot(data= complete_juveniles, aes(y=weight, x=hindft))+
 
 
 ```
-**Figure 2.** 
+**Figure 3.** 
 Relationship between hind foot length (mm) and weight (g) of juvenile snowshoe hares. Points indicate individual hare measurements. 
 Linear model summary: 
 $\beta$~1~ = `r round(tidy_juveniles_lm$estimate[2],2)` g mm^-1^, 
@@ -362,24 +361,32 @@ Pearson's *r* = `r round(juveniles_corr$estimate,2)`).
 Data: Kielland et al. (2017)
 
 
-### Exploring model assumptions
+Overall a linear model of weight with respect to hind foot length does not account completely for the change in the dependent variable. 
+Apart from data not following entirely a linear trend, further explorations show residuals are not entirely normally distributed and violate homoscedasticity (do not appear to be randomly distributed). 
 
-```{r}
+```{r, include=FALSE}
 # --- Checking model assumptions
 plot(juveniles_lm)
 
 ```
 
-```{r}
-# --- Visualize the model
-ggplot( data=complete_juveniles, aes(x=hindft, y=weight)) +
-  geom_point(alpha=0.4)+
-  geom_smooth( method = "lm",
-               color= "red",
-               size =0.5, 
-               fill="gray10",
-               alpha=0.5)+
-  theme_light()
+Notice that sex is not included as a variable in the previous analysis. 
+If we consider observations for female and male hares separately we can see in Figure 4 that data for female hares follows a more linear trend while data for male hares tends to spread out more. 
+It would be interesting to consider a linear model for each of these groups separately. 
+```{r, message=FALSE, echo=FALSE}
+# --- Relationship between juvenile hind foot length and weight, by sex
+
+# --- Graph
+ggplot(data= complete_juveniles, aes(y=weight, x=hindft, color=sex))+
+  geom_point( alpha = 0.7) +
+  labs( y="Weight (g)", 
+        x="Hind foot length (mm)")+
+  theme_light() + # update theme
+  theme(legend.position = c(0.15, 0.7))
+
 ```
 
-
+ **Figure 4.** 
+Relationship between hind foot length (mm) and weight (g) of juvenile snowshoe hares divided by sex.
+Red (female), blue (male) and gray (unidentified) points indicate individual observations of juvenile snowshoe hares.
+Data: Kielland et al. (2017)
