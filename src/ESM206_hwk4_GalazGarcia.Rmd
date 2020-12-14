@@ -1,6 +1,6 @@
 ---
 title: "Mini “exploratory report” on juvenile snowshoe hares in Bonanza Creek Experimental Forest (Long Term Ecological Research site)"
-subtitle: "Homework 4 - Task 2"
+subtitle: "ESM 206  - Environmental Data Science : Homework 4"
 author: "Carmen Galaz-García"
 date: "11/15/2020"
 output: html_document
@@ -27,10 +27,19 @@ juveniles <- hares %>% filter(age=="j")
 
 ## Introduction
 
+In this report we examine the counts, weight and size measurements of juvenile snowshoe hares observed at the Bonanza Creek Experimental Forest from 1999 to 2012 (Kielland et al. 2017). 
+In particular, we look at how the number of observations of juvenile snowshoe hares has changed over the course of the study, how weight varies across sex and sampling site and explore a possible linear relation between hares' weight and hind foot length. 
+
+
+![](`r "https://www.adfg.alaska.gov/static/species/speciesinfo/snowshoehare/images/snowshoehare_boards.jpg"`)
+
+Picture credit: Jim Dau, Alaska Department of Fish and Game
+
 ## Data and analysis
 Size measurements, sex and age of snowshoe hares were collected and made available by Dr. Knut Kielland and colleagues at the Bonanza Creek Experimental Forest Long Term Ecological Research (LTER) site located approximately 20 km southwest of Fairbanks, Alaska. The data contains observations of 3197 snowshoe hares obtained by capture-recapture studies conducted yearly from 1999 to 2012 in three sampling sites: Bonanza Riparian, Bonanza Mature and  Bonanza Black Spruce. 
+Out of the total observations, 378 correspond to juvenile snowshoe hares. 
 
-This report has four sections, each focused on analyzing different data related to *juvenile* snowshoe hares.
+This report has four sections, each focused on analyzing different data related to juvenile snowshoe hares.
 
 -**Section 1) Annual juvenile hare trap counts**   
 Exploration of the counts by year of juvenile snowshoe hares.
@@ -52,7 +61,7 @@ All analyses are in R version 4.0.2 using RStudio Version 1.3.1093.
 
 ### Section 1) Annual juvenile hare trap counts
 
-Yearly counts of juvenile snowshoe hares are analyzed. 
+In this section we analyze yearly counts of juvenile snowshoe hares. 
 In total 378 observations of juvenile snowshoe hares were recorded during the study.
 Sample site is not included as a variable here, though it would be it would be interesting to see if juvenile hare counts are changing equally in all sample sites. 
 
@@ -123,7 +132,7 @@ In Bonanza Mature and Bonanza Riparian the average and standard deviations of we
 
 ```{r message=FALSE, warning=FALSE, echo= FALSE}
 
-# --- Create table with summar statistics 
+# --- Create table with summary statistics 
 
 weight_summary_table <- summary_juveniles %>% 
   mutate(
@@ -161,7 +170,7 @@ grid_names <- c(bonbs="Bonanza Black Spruce",
                 bonmat="Bonanza Mature")
 
 # -- make beeswax plot with added box-plot on top
-ggplot(data = juveniles, aes(x = sex, y = weight), ) +
+ggplot(data = juveniles, aes(x = sex, y = weight) ) +
   geom_beeswarm(show.legend=FALSE,
                 aes(color=sex),
                 size = 4,    # point size
@@ -351,7 +360,8 @@ ggplot(data= complete_juveniles, aes(y=weight, x=hindft))+
 
 
 ```
-**Figure 3.** 
+
+**Figure 3.**
 Relationship between hind foot length (mm) and weight (g) of juvenile snowshoe hares. Points indicate individual hare measurements. 
 Linear model summary: 
 $\beta$~1~ = `r round(tidy_juveniles_lm$estimate[2],2)` g mm^-1^, 
@@ -376,6 +386,13 @@ It would be interesting to consider a linear model for each of these groups sepa
 ```{r, message=FALSE, echo=FALSE}
 # --- Relationship between juvenile hind foot length and weight, by sex
 
+# awful update of names (short on time)
+complete_juveniles  <- complete_juveniles %>% mutate(
+        sex = case_when(   # update names of sex
+         sex == "f" ~ "female",
+         sex == "m" ~"male"
+       ))
+
 # --- Graph
 ggplot(data= complete_juveniles, aes(y=weight, x=hindft, color=sex))+
   geom_point( alpha = 0.7) +
@@ -390,3 +407,37 @@ ggplot(data= complete_juveniles, aes(y=weight, x=hindft, color=sex))+
 Relationship between hind foot length (mm) and weight (g) of juvenile snowshoe hares divided by sex.
 Red (female), blue (male) and gray (unidentified) points indicate individual observations of juvenile snowshoe hares.
 Data: Kielland et al. (2017)
+
+
+## Summary
+
+Exploratory data analysis reveals the following findings:
+
+- Juvenile snowshoe hare observations have overall diminished yearly since the study started in 1999.
+
+- Hares observed at the Bonanza Black Spruce sampling site were on average bigger than hares observed at Bonanza Mature and Bonanza riparian, where the weight average for male and female hares were similar. 
+
+- On average male juvenile hares weigh more than female hares and the difference in means is significant (Welch's two-sample t-test: t(`r round(ttest_juveniles$parameter,2)`) 
+= `r round(ttest_juveniles$statistic,2)`, 
+p=`r round(ttest_juveniles$p.value,4)` < $\alpha$), 
+though the effect size is small 
+(Cohen's *d* = `r round(juveniles_effsize$estimate,2)`).
+
+- There is no conclusive evidence of a linear relationship between hind foot length and weight in the total observations for juvenile snowshoe hares.
+
+Next steps:
+
+- Make a finer analysis of the count of juvenile hares that takes into account the month of the observation and not only the year.
+
+- Analyze whether the difference in average weight between the different sample sites is significant. A one-way ANOVA could be used.
+though given the difference in sample sizes at each site further analysis might be needed.
+
+- Include sex variable in the linear analysis of weight as a variable of hind foot or analyze female and male hares separately.
+
+## Citations
+
+Kielland, K., F.S. Chapin, R.W. Ruess, and Bonanza Creek LTER. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present ver 22. Environmental Data Initiative. 
+(https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14) (Accessed 2020-11-19).
+
+
+Teddy. Palmer penguin sizes: exploratory report. (Accessed 2020-11-20)
